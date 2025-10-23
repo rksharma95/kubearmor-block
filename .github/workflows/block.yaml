@@ -53,16 +53,16 @@ jobs:
         run: |
           helm repo add kubearmor https://kubearmor.github.io/charts
           helm repo update kubearmor
-          helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n agents --create-namespace --set autoDeploy=true
-          kubectl wait --for=condition=ready --timeout=5m -n agents pod -l kubearmor-app=kubearmor-operator
+          helm upgrade --install kubearmor-operator kubearmor/kubearmor-operator -n kubearmor --create-namespace --set autoDeploy=true
+          kubectl wait --for=condition=ready --timeout=5m -n kubearmor pod -l kubearmor-app=kubearmor-operator
           kubectl get pods -A
 
-          kubectl wait -n agents --timeout=5m --for=jsonpath='{.status.phase}'=Running kubearmorconfigs/kubearmor-default
+          kubectl wait -n kubearmor --timeout=5m --for=jsonpath='{.status.phase}'=Running kubearmorconfigs/kubearmor-default
           
-          while [ ! "$(kubectl wait --timeout=5s --for=condition=ready pod -l kubearmor-app,kubearmor-app!=kubearmor-snitch -n agents >/dev/null 2>&1; echo $?)" -eq 0 ]; do
-            kubectl rollout status --timeout=5m deployment -n agents -l kubearmor-app,kubearmor-app!=kubearmor-controller -n agents
-            kubectl rollout status --timeout=5m daemonset -l kubearmor-app=kubearmor -n agents
-            kubectl rollout status --timeout=5m deployment -n agents -l kubearmor-app=kubearmor-controller -n agents
+          while [ ! "$(kubectl wait --timeout=5s --for=condition=ready pod -l kubearmor-app,kubearmor-app!=kubearmor-snitch -n kubearmor >/dev/null 2>&1; echo $?)" -eq 0 ]; do
+            kubectl rollout status --timeout=5m deployment -n kubearmor -l kubearmor-app,kubearmor-app!=kubearmor-controller -n kubearmor
+            kubectl rollout status --timeout=5m daemonset -l kubearmor-app=kubearmor -n kubearmor
+            kubectl rollout status --timeout=5m deployment -n kubearmor -l kubearmor-app=kubearmor-controller -n kubearmor
             kubectl get pods -A
           done
 
@@ -123,7 +123,7 @@ jobs:
       #
       - name: Get karmor sysdump
         run: |
-          kubectl describe pod -n agents -l kubearmor-app=kubearmor
+          kubectl describe pod -n kubearmor -l kubearmor-app=kubearmor
           curl -sfL http://get.kubearmor.io/ | sudo sh -s -- -b /usr/local/bin
           mkdir -p /tmp/kubearmor/ && cd /tmp/kubearmor && karmor sysdump
       - name: Archive log artifacts
